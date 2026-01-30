@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { calculateFullResult } from '@/lib/utils/scoring';
+import { validateAnswers, validateEmail, validatePhone, sanitizeString } from '@/lib/utils/validation';
 import { CreateSubmissionPayload, WebhookPayload, AreaCategory } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -8,9 +9,49 @@ export async function POST(request: NextRequest) {
     const body: CreateSubmissionPayload = await request.json();
 
     // Validate required fields
-    if (!body.tenant_slug || !body.company_name || !body.answers) {
+    if (!body.tenant_slug || !body.company_name) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: tenant_slug and company_name are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate answers (all 14 questions with values 1-5)
+    const answersValidation = validateAnswers(body.answers);
+    if (!answersValidation.valid) {
+      return NextResponse.json(
+        { error: answersValidation.error },
+        { status: 400 }
+      );
+    }
+
+    // Validate optional email format
+    if (body.email && !validateEmail(body.email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    // Validate optional phone format
+    if (body.phone && !validatePhone(body.phone)) {
+      return NextResponse.json(
+        { error: 'Invalid phone format' },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize string inputs
+    const companyName = sanitizeString(body.company_name, 255);
+    const sector = body.sector ? sanitizeString(body.sector, 100) : null;
+    const revenueRange = body.revenue_range ? sanitizeString(body.revenue_range, 50) : null;
+    const employeesRange = body.employees_range ? sanitizeString(body.employees_range, 50) : null;
+    const email = body.email ? sanitizeString(body.email, 255) : null;
+    const phone = body.phone ? sanitizeString(body.phone, 50) : null;
+
+    if (!companyName) {
+      return NextResponse.json(
+        { error: 'company_name cannot be empty' },
         { status: 400 }
       );
     }
@@ -40,12 +81,12 @@ export async function POST(request: NextRequest) {
       .from('submissions')
       .insert({
         tenant_id: tenant.id,
-        company_name: body.company_name,
-        sector: body.sector || null,
-        revenue_range: body.revenue_range || null,
-        employees_range: body.employees_range || null,
-        email: body.email || null,
-        phone: body.phone || null,
+        company_name: companyName,
+        sector,
+        revenue_range: revenueRange,
+        employees_range: employeesRange,
+        email,
+        phone,
         answers: body.answers,
         scores: result.scores,
         grade: result.grade,
@@ -81,8 +122,8 @@ export async function POST(request: NextRequest) {
 
       // Only include contact info if tenant has send_contact_to_make enabled
       if (tenant.send_contact_to_make) {
-        if (body.email) webhookPayload.email = body.email;
-        if (body.phone) webhookPayload.phone = body.phone;
+        if (email) webhookPayload.email = email;
+        if (phone) webhookPayload.phone = phone;
       }
 
       // Fire webhook asynchronously (don't await)
