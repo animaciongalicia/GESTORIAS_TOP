@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { calculateFullResult } from '@/lib/utils/scoring';
 import { validateAnswers, validateEmail, validatePhone, sanitizeString } from '@/lib/utils/validation';
+import { fireWebhookAsync } from '@/lib/utils/webhook';
 import { CreateSubmissionPayload, WebhookPayload, AreaCategory } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fire webhook if configured
+    // Fire webhook if configured (with retry logic and logging)
     if (tenant.webhook_url) {
       const redAreas: AreaCategory[] = (Object.entries(result.trafficLights) as [AreaCategory, string][])
         .filter(([, light]) => light === 'red')
@@ -126,13 +127,12 @@ export async function POST(request: NextRequest) {
         if (phone) webhookPayload.phone = phone;
       }
 
-      // Fire webhook asynchronously (don't await)
-      fetch(tenant.webhook_url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(webhookPayload),
-      }).catch((err) => {
-        console.error('Webhook error:', err);
+      // Fire webhook asynchronously with retry and logging
+      fireWebhookAsync({
+        tenantId: tenant.id,
+        submissionId: submission.id,
+        webhookUrl: tenant.webhook_url,
+        payload: webhookPayload,
       });
     }
 

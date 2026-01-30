@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DiagnosticsCounter } from '@/components/landing/DiagnosticsCounter';
 
 export default function HomePage() {
   return (
@@ -8,16 +9,28 @@ export default function HomePage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           Diagnóstico de Rentabilidad
         </h1>
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 mb-6">
           Plataforma SaaS para gestorías y asesorías que quieren ayudar a sus clientes
           a identificar oportunidades de mejora.
         </p>
-        <div className="space-y-4">
+
+        {/* Diagnostics counter */}
+        <div className="mb-8">
+          <DiagnosticsCounter />
+        </div>
+
+        <div className="space-y-3">
           <Link
             href="/d/demo"
             className="block w-full py-3 px-6 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             Ver demo del diagnóstico
+          </Link>
+          <Link
+            href="/registro"
+            className="block w-full py-3 px-6 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+          >
+            Registrar mi gestoría
           </Link>
           <Link
             href="/login"

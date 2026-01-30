@@ -22,7 +22,8 @@ export function DashboardNav({ user, tenant }: DashboardNavProps) {
   };
 
   const navItems = [
-    { href: '/dashboard', label: 'Diagnósticos', icon: '📊' },
+    { href: '/dashboard', label: 'Diagnósticos', icon: '📋' },
+    { href: '/dashboard/analytics', label: 'Estadísticas', icon: '📊' },
     { href: '/dashboard/settings', label: 'Configuración', icon: '⚙️' },
   ];
 

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Tenant, WizardState } from '@/types';
 import { WIZARD_SCREENS, WIZARD_QUESTIONS, SECTOR_OPTIONS, REVENUE_RANGE_OPTIONS, EMPLOYEES_RANGE_OPTIONS } from '@/lib/constants/wizard';
+import { useWizardPersistence } from '@/hooks/useWizardPersistence';
 import { WizardProgress } from './WizardProgress';
 import { QuestionCard } from './QuestionCard';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,39 @@ export function Wizard({ tenant }: WizardProps) {
   const [state, setState] = useState<WizardState>(initialState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const { loadState, saveState, clearState, hasStoredState } = useWizardPersistence(tenant.slug);
+
+  // Check for stored progress on mount
+  useEffect(() => {
+    if (hasStoredState()) {
+      setShowResumePrompt(true);
+    }
+    setIsInitialized(true);
+  }, [hasStoredState]);
+
+  // Save state changes to localStorage (but not on initial load)
+  useEffect(() => {
+    if (isInitialized && !showResumePrompt) {
+      saveState(state);
+    }
+  }, [state, saveState, isInitialized, showResumePrompt]);
+
+  const handleResume = useCallback(() => {
+    const storedState = loadState();
+    if (storedState) {
+      setState(storedState);
+    }
+    setShowResumePrompt(false);
+  }, [loadState]);
+
+  const handleStartFresh = useCallback(() => {
+    clearState();
+    setState(initialState);
+    setShowResumePrompt(false);
+  }, [clearState]);
 
   const currentScreenData = WIZARD_SCREENS[state.currentScreen];
   const isFirstScreen = state.currentScreen === 0;
@@ -123,6 +157,9 @@ export function Wizard({ tenant }: WizardProps) {
         throw new Error(data.error || 'Error al enviar el diagnóstico');
       }
 
+      // Clear saved progress after successful submission
+      clearState();
+
       router.push(`/d/${tenant.slug}/result/${data.submission_id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -135,6 +172,29 @@ export function Wizard({ tenant }: WizardProps) {
       case 'intro':
         return (
           <div className="text-center py-8">
+            {showResumePrompt && (
+              <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-800 font-medium mb-3">
+                  Tienes un diagnóstico sin terminar
+                </p>
+                <div className="flex justify-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleStartFresh}
+                  >
+                    Empezar de nuevo
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleResume}
+                    style={{ backgroundColor: tenant.brand_color }}
+                  >
+                    Continuar
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="text-6xl mb-6">📊</div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {currentScreenData.title}
