@@ -29,8 +29,9 @@ export default async function SubmissionDetailPage({ params }: PageProps) {
     redirect('/dashboard');
   }
 
-  // Extract tenant
-  const tenant = userData.tenant as Tenant | null;
+  // Extract tenant (Supabase returns it as array for relations)
+  const tenantData = userData.tenant;
+  const tenant = (Array.isArray(tenantData) ? tenantData[0] : tenantData) as Tenant | null;
 
   // Get submission (RLS ensures only tenant's submissions are visible)
   const { data: submission, error } = await supabase

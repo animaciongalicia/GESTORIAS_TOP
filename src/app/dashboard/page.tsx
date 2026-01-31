@@ -27,8 +27,9 @@ export default async function DashboardPage() {
     );
   }
 
-  // Extract tenant (Supabase returns it as array or object depending on relationship)
-  const tenant = userData.tenant as Tenant | null;
+  // Extract tenant (Supabase returns it as array for relations)
+  const tenantData = userData.tenant;
+  const tenant = (Array.isArray(tenantData) ? tenantData[0] : tenantData) as Tenant | null;
 
   // Get submissions for this tenant
   const { data: submissions, error } = await supabase

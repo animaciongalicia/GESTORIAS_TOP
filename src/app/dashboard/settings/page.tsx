@@ -19,8 +19,9 @@ export default async function SettingsPage() {
     .eq('id', user.id)
     .single();
 
-  // Extract tenant
-  const tenant = userData?.tenant as Tenant | null;
+  // Extract tenant (Supabase returns it as array for relations)
+  const tenantData = userData?.tenant;
+  const tenant = (Array.isArray(tenantData) ? tenantData[0] : tenantData) as Tenant | null;
 
   if (!tenant) {
     return (

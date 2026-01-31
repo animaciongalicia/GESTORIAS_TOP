@@ -32,8 +32,9 @@ export default async function DashboardLayout({
     redirect('/admin');
   }
 
-  // Extract tenant
-  const tenant = userData.tenant as Tenant | null;
+  // Extract tenant (Supabase returns it as array for relations)
+  const tenantData = userData.tenant;
+  const tenant = (Array.isArray(tenantData) ? tenantData[0] : tenantData) as Tenant | null;
 
   return (
     <div className="min-h-screen bg-gray-50">
