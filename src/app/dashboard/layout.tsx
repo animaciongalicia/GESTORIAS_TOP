@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
+import { Tenant } from '@/types';
 
 export default async function DashboardLayout({
   children,
@@ -31,9 +32,12 @@ export default async function DashboardLayout({
     redirect('/admin');
   }
 
+  // Extract tenant
+  const tenant = userData.tenant as Tenant | null;
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardNav user={userData} tenant={userData.tenant} />
+      <DashboardNav user={userData} tenant={tenant} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>

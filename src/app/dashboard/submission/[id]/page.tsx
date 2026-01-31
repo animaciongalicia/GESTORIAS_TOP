@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { SubmissionDetail } from '@/components/dashboard/SubmissionDetail';
+import { Tenant } from '@/types';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -27,6 +28,9 @@ export default async function SubmissionDetailPage({ params }: PageProps) {
   if (!userData?.tenant_id) {
     redirect('/dashboard');
   }
+
+  // Extract tenant
+  const tenant = userData.tenant as Tenant | null;
 
   // Get submission (RLS ensures only tenant's submissions are visible)
   const { data: submission, error } = await supabase
@@ -56,7 +60,7 @@ export default async function SubmissionDetailPage({ params }: PageProps) {
 
       <SubmissionDetail
         submission={submission}
-        tenantSlug={userData.tenant?.slug || ''}
+        tenantSlug={tenant?.slug || ''}
       />
     </div>
   );

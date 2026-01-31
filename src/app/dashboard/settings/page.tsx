@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { TenantSettings } from '@/components/dashboard/TenantSettings';
+import { Tenant } from '@/types';
 
 export default async function SettingsPage() {
   const supabase = await createServerSupabaseClient();
@@ -18,7 +19,10 @@ export default async function SettingsPage() {
     .eq('id', user.id)
     .single();
 
-  if (!userData?.tenant) {
+  // Extract tenant
+  const tenant = userData?.tenant as Tenant | null;
+
+  if (!tenant) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">No tienes un tenant asignado.</p>
@@ -33,7 +37,7 @@ export default async function SettingsPage() {
         <p className="text-gray-600">Personaliza tu diagnóstico</p>
       </div>
 
-      <TenantSettings tenant={userData.tenant} />
+      <TenantSettings tenant={tenant} />
     </div>
   );
 }

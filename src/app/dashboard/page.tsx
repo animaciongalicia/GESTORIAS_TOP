@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { SubmissionsList } from '@/components/dashboard/SubmissionsList';
+import { Tenant } from '@/types';
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient();
@@ -26,6 +27,9 @@ export default async function DashboardPage() {
     );
   }
 
+  // Extract tenant (Supabase returns it as array or object depending on relationship)
+  const tenant = userData.tenant as Tenant | null;
+
   // Get submissions for this tenant
   const { data: submissions, error } = await supabase
     .from('submissions')
@@ -50,7 +54,7 @@ export default async function DashboardPage() {
 
       <SubmissionsList
         submissions={submissions || []}
-        tenantSlug={userData.tenant?.slug || ''}
+        tenantSlug={tenant?.slug || ''}
       />
     </div>
   );
