@@ -135,16 +135,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send verification email
-    const { error: emailError } = await supabase.auth.admin.generateLink({
-      type: 'signup',
-      email: body.email,
-    });
-
-    if (emailError) {
-      console.error('Email verification error:', emailError);
-      // Don't fail registration, just log the error
-    }
+    // User created successfully - Supabase will send verification email automatically
+    // if email confirmations are enabled in the Supabase dashboard
 
     return NextResponse.json({
       success: true,
