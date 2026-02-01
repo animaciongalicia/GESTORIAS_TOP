@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,6 +92,14 @@ function LoginForm() {
             >
               Iniciar sesión
             </Button>
+            <div className="text-center">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>
