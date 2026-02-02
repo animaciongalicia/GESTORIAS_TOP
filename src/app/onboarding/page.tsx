@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -30,11 +30,7 @@ export default function OnboardingPage() {
   const [logoUrl, setLogoUrl] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
 
-  useEffect(() => {
-    loadTenantData();
-  }, []);
-
-  const loadTenantData = async () => {
+  const loadTenantData = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -68,7 +64,11 @@ export default function OnboardingPage() {
     }
 
     setIsLoading(false);
-  };
+  }, [router]);
+
+  useEffect(() => {
+    loadTenantData();
+  }, [loadTenantData]);
 
   const saveBranding = async () => {
     if (!tenant) return;
