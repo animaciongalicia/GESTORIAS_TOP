@@ -53,17 +53,12 @@ export function Wizard({ tenant }: WizardProps) {
     setIsInitialized(true);
   }, [hasStoredState]);
 
-  // If showing landing, render it
-  if (showLanding) {
-    return <TenantLanding tenant={tenant} onStart={() => setShowLanding(false)} />;
-  }
-
   // Save state changes to localStorage (but not on initial load)
   useEffect(() => {
-    if (isInitialized && !showResumePrompt) {
+    if (isInitialized && !showResumePrompt && !showLanding) {
       saveState(state);
     }
-  }, [state, saveState, isInitialized, showResumePrompt]);
+  }, [state, saveState, isInitialized, showResumePrompt, showLanding]);
 
   const handleResume = useCallback(() => {
     const storedState = loadState();
@@ -78,6 +73,11 @@ export function Wizard({ tenant }: WizardProps) {
     setState(initialState);
     setShowResumePrompt(false);
   }, [clearState]);
+
+  // If showing landing, render it (after all hooks)
+  if (showLanding) {
+    return <TenantLanding tenant={tenant} onStart={() => setShowLanding(false)} />;
+  }
 
   const currentScreenData = WIZARD_SCREENS[state.currentScreen];
   const isFirstScreen = state.currentScreen === 0;

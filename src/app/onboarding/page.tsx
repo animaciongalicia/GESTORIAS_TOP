@@ -291,7 +291,7 @@ export default function OnboardingPage() {
                 <p className="font-medium text-amber-800 mb-2">¿Cómo funciona?</p>
                 <ol className="text-amber-700 space-y-1 list-decimal list-inside">
                   <li>Crea un escenario en Make.com o Zapier</li>
-                  <li>Añade un trigger "Webhook"</li>
+                  <li>Añade un trigger de tipo Webhook</li>
                   <li>Copia la URL y pégala aquí</li>
                   <li>Recibirás datos del diagnóstico automáticamente</li>
                 </ol>
