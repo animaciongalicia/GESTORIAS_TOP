@@ -13,8 +13,16 @@ export interface Tenant {
   slug: string;
   name: string;
   brand_color: string;
+  logo_url: string | null;
   webhook_url: string | null;
   send_contact_to_make: boolean;
+  notification_email: string | null;
+  notify_high_urgency: boolean;
+  // Landing page customization
+  show_landing_page: boolean;
+  landing_headline: string | null;
+  landing_subheadline: string | null;
+  landing_cta_text: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;

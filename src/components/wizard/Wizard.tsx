@@ -7,6 +7,7 @@ import { WIZARD_SCREENS, WIZARD_QUESTIONS, SECTOR_OPTIONS, REVENUE_RANGE_OPTIONS
 import { useWizardPersistence } from '@/hooks/useWizardPersistence';
 import { WizardProgress } from './WizardProgress';
 import { QuestionCard } from './QuestionCard';
+import { TenantLanding } from './TenantLanding';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -38,6 +39,7 @@ export function Wizard({ tenant }: WizardProps) {
   const [error, setError] = useState<string | null>(null);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [showLanding, setShowLanding] = useState(tenant.show_landing_page || false);
 
   const { loadState, saveState, clearState, hasStoredState } = useWizardPersistence(tenant.slug);
 
@@ -45,9 +47,16 @@ export function Wizard({ tenant }: WizardProps) {
   useEffect(() => {
     if (hasStoredState()) {
       setShowResumePrompt(true);
+      // If there's stored state, skip landing
+      setShowLanding(false);
     }
     setIsInitialized(true);
   }, [hasStoredState]);
+
+  // If showing landing, render it
+  if (showLanding) {
+    return <TenantLanding tenant={tenant} onStart={() => setShowLanding(false)} />;
+  }
 
   // Save state changes to localStorage (but not on initial load)
   useEffect(() => {

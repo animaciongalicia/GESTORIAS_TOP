@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,7 +61,21 @@ export default function RegistroPage() {
         throw new Error(data.error || 'Error al registrar');
       }
 
-      setSuccess(true);
+      // Auto-login after registration
+      const supabase = createClient();
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (loginError) {
+        // If auto-login fails, show success and redirect to login
+        setSuccess(true);
+        return;
+      }
+
+      // Redirect to onboarding
+      router.push('/onboarding');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {

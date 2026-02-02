@@ -3,6 +3,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { calculateFullResult } from '@/lib/utils/scoring';
 import { validateAnswers, validateEmail, validatePhone, sanitizeString } from '@/lib/utils/validation';
 import { fireWebhookAsync } from '@/lib/utils/webhook';
+import { sendHighUrgencyEmailAsync } from '@/lib/utils/email';
 import { CreateSubmissionPayload, WebhookPayload, AreaCategory } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -133,6 +134,24 @@ export async function POST(request: NextRequest) {
         submissionId: submission.id,
         webhookUrl: tenant.webhook_url,
         payload: webhookPayload,
+      });
+    }
+
+    // Send email notification for high urgency if configured
+    if (
+      result.urgency === 'high' &&
+      tenant.notify_high_urgency !== false &&
+      tenant.notification_email
+    ) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tudominio.com';
+      sendHighUrgencyEmailAsync(tenant.notification_email, {
+        tenantName: tenant.name,
+        companyName: companyName,
+        grade: result.grade,
+        urgency: result.urgency,
+        submissionId: submission.id,
+        dashboardUrl: `${baseUrl}/dashboard/submission/${submission.id}`,
+        triggers: result.triggers,
       });
     }
 

@@ -6,9 +6,10 @@ interface PDFData {
   submission: Submission;
   tenant: Tenant;
   priorityLevers: PriorityLever[];
+  logoBase64?: string;
 }
 
-export function generateDiagnosticPDF({ submission, tenant, priorityLevers }: PDFData): jsPDF {
+export function generateDiagnosticPDF({ submission, tenant, priorityLevers, logoBase64 }: PDFData): jsPDF {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -51,18 +52,30 @@ export function generateDiagnosticPDF({ submission, tenant, priorityLevers }: PD
   const brandB = parseInt(brandHex.substring(4, 6), 16);
 
   doc.setFillColor(brandR, brandG, brandB);
-  doc.rect(0, 0, pageWidth, 25, 'F');
+  doc.rect(0, 0, pageWidth, 30, 'F');
+
+  // Add logo if available
+  let textStartX = margin;
+  if (logoBase64) {
+    try {
+      // Add logo image (max height 20mm, auto width)
+      doc.addImage(logoBase64, 'PNG', margin, 5, 0, 20);
+      textStartX = margin + 30; // Offset text after logo
+    } catch {
+      // If logo fails, continue without it
+    }
+  }
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text(tenant.name, margin, 15);
+  doc.text(tenant.name, textStartX, 15);
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text('Diagnóstico de Rentabilidad', pageWidth - margin - doc.getTextWidth('Diagnóstico de Rentabilidad'), 15);
+  doc.text('Diagnóstico de Rentabilidad', textStartX, 23);
 
-  y = 40;
+  y = 45;
 
   // Company name and date
   doc.setTextColor(100, 100, 100);
@@ -252,15 +265,41 @@ export function generateDiagnosticPDF({ submission, tenant, priorityLevers }: PD
   return doc;
 }
 
-export function downloadDiagnosticPDF(submission: Submission, tenant: Tenant): void {
+// Helper to load image as base64
+async function loadImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function downloadDiagnosticPDF(submission: Submission, tenant: Tenant): Promise<void> {
   const trafficLights = getTrafficLights(submission.scores);
   const triggers = submission.triggers || detectTriggers(submission.answers);
   const priorityLevers = getPriorityLevers(submission.scores, triggers, trafficLights);
+
+  // Load logo if available
+  let logoBase64: string | undefined;
+  if (tenant.logo_url) {
+    const base64 = await loadImageAsBase64(tenant.logo_url);
+    if (base64) {
+      logoBase64 = base64;
+    }
+  }
 
   const pdf = generateDiagnosticPDF({
     submission,
     tenant,
     priorityLevers,
+    logoBase64,
   });
 
   const fileName = `diagnostico-${submission.company_name.toLowerCase().replace(/\s+/g, '-')}-${new Date(submission.created_at).toISOString().split('T')[0]}.pdf`;

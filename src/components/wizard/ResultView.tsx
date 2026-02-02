@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Submission, Tenant, AreaCategory } from '@/types';
 import { GRADE_INFO, AREA_INFO, TRAFFIC_LIGHT_COLORS, getTrafficLights, getPriorityLevers, detectTriggers } from '@/lib/utils/scoring';
 import { downloadDiagnosticPDF } from '@/lib/utils/pdf';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { SectorComparison } from './SectorComparison';
+import { EvolutionComparison } from './EvolutionComparison';
 import { cn } from '@/lib/utils';
 
 interface ResultViewProps {
@@ -18,6 +19,37 @@ interface ResultViewProps {
 export function ResultView({ submission, tenant }: ResultViewProps) {
   const [optInRequested, setOptInRequested] = useState(submission.opt_in_help);
   const [isRequesting, setIsRequesting] = useState(false);
+  const [previousSubmission, setPreviousSubmission] = useState<Submission | null>(null);
+
+  // Fetch previous submissions for evolution comparison
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!submission.email && !submission.company_name) return;
+
+      try {
+        const params = new URLSearchParams({
+          tenant_id: submission.tenant_id,
+          current_id: submission.id,
+        });
+        if (submission.email) {
+          params.set('email', submission.email);
+        } else {
+          params.set('company_name', submission.company_name);
+        }
+
+        const response = await fetch(`/api/submissions/history?${params}`);
+        const data = await response.json();
+
+        if (data.submissions && data.submissions.length > 0) {
+          setPreviousSubmission(data.submissions[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching history:', error);
+      }
+    };
+
+    fetchHistory();
+  }, [submission]);
 
   const gradeInfo = GRADE_INFO[submission.grade];
   const trafficLights = getTrafficLights(submission.scores);
@@ -83,6 +115,14 @@ export function ResultView({ submission, tenant }: ResultViewProps) {
             </p>
           </CardContent>
         </Card>
+
+        {/* Evolution Comparison (if there's a previous submission) */}
+        {previousSubmission && (
+          <EvolutionComparison
+            currentSubmission={submission}
+            previousSubmission={previousSubmission}
+          />
+        )}
 
         {/* Traffic Lights */}
         <Card>
@@ -193,7 +233,9 @@ export function ResultView({ submission, tenant }: ResultViewProps) {
         {/* Share / Print / Download */}
         <div className="flex justify-center gap-4 text-sm">
           <button
-            onClick={() => downloadDiagnosticPDF(submission, tenant)}
+            onClick={async () => {
+              await downloadDiagnosticPDF(submission, tenant);
+            }}
             className="text-gray-500 hover:text-gray-700 flex items-center gap-1"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

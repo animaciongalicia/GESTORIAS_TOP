@@ -94,12 +94,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the user in Supabase Auth
+    // Note: tenant_id and role are passed in metadata for the auto-create trigger
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: body.email,
       password: body.password,
       email_confirm: true, // Auto-confirm for beta testing
       user_metadata: {
         full_name: body.fullName,
+        tenant_id: tenant.id,
+        role: 'advisor',
       },
     });
 

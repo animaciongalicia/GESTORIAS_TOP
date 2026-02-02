@@ -18,6 +18,8 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
   const [brandColor, setBrandColor] = useState(tenant.brand_color);
   const [webhookUrl, setWebhookUrl] = useState(tenant.webhook_url || '');
   const [sendContactToMake, setSendContactToMake] = useState(tenant.send_contact_to_make);
+  const [notificationEmail, setNotificationEmail] = useState(tenant.notification_email || '');
+  const [notifyHighUrgency, setNotifyHighUrgency] = useState(tenant.notify_high_urgency !== false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -34,6 +36,8 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
         brand_color: brandColor,
         webhook_url: webhookUrl || null,
         send_contact_to_make: sendContactToMake,
+        notification_email: notificationEmail || null,
+        notify_high_urgency: notifyHighUrgency,
       })
       .eq('id', tenant.id);
 
@@ -134,6 +138,45 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
   "phone": "opcional"` : ''}
 }`}
             </pre>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Email Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Notificaciones por Email</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Input
+            label="Email para notificaciones"
+            type="email"
+            value={notificationEmail}
+            onChange={(e) => setNotificationEmail(e.target.value)}
+            placeholder="alertas@tugestoria.com"
+          />
+          <p className="text-sm text-gray-500">
+            Recibirás notificaciones cuando se complete un diagnóstico con urgencia alta.
+          </p>
+
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="notifyHighUrgency"
+              checked={notifyHighUrgency}
+              onChange={(e) => setNotifyHighUrgency(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300"
+            />
+            <label htmlFor="notifyHighUrgency" className="text-sm text-gray-700">
+              Enviar email cuando hay diagnósticos con urgencia alta
+            </label>
+          </div>
+
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-sm text-amber-800">
+              <strong>Nota:</strong> Para activar las notificaciones por email, el administrador
+              debe configurar la clave <code className="bg-amber-100 px-1 rounded">RESEND_API_KEY</code> en las variables de entorno.
+            </p>
           </div>
         </CardContent>
       </Card>
